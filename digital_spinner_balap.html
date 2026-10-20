@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#15251f">
+<title>Spinner Balap — Digital</title>
+<style>
+  :root { color-scheme: dark; --bg:#101814; --panel:#1a2821; --panel2:#24352b; --cream:#f5edda; --muted:#b9c7bd; --gold:#f0c76a; --green:#91d6a3; --red:#f2a28d; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; background:radial-gradient(ellipse at top,#263b2e 0%,var(--bg) 65%); color:var(--cream); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; display:flex; justify-content:center; padding:24px 14px; }
+  main { width:min(760px,100%); }
+  header { text-align:center; margin:10px 0 22px; }
+  .eyebrow { color:var(--gold); text-transform:uppercase; letter-spacing:.18em; font-size:.76rem; font-weight:800; }
+  h1 { margin:8px 0; font-size:clamp(2rem,7vw,3.3rem); line-height:1.05; }
+  .sub { color:var(--muted); margin:0 auto; max-width:500px; }
+  .panel { background:rgba(26,40,33,.94); border:1px solid #3a5143; border-radius:22px; padding:clamp(16px,4vw,28px); box-shadow:0 18px 50px #0005; }
+  .deck-area { display:flex; justify-content:center; padding:12px 0 22px; perspective:1000px; }
+  .card { width:min(290px,75vw); aspect-ratio:5/7; border-radius:22px; border:3px solid var(--gold); background:linear-gradient(145deg,#f8f0dc,#dfd2ae); color:#20352a; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; box-shadow:0 12px 0 #0003,0 20px 35px #0005; transition:transform .55s cubic-bezier(.2,.8,.2,1); overflow:hidden; }
+  .card:before { content:""; position:absolute; inset:10px; border:1px solid #8b7a4e; border-radius:14px; pointer-events:none; }
+  .card.back { background:repeating-linear-gradient(45deg,#294d39 0 10px,#203e2e 10px 20px); color:var(--cream); }
+  .card.back:before { border:2px solid var(--gold); }
+  .card.shuffling { animation:shuffle .45s ease-in-out 2; }
+  @keyframes shuffle { 0%,100%{transform:rotateY(0) rotate(-2deg) translateY(0)} 25%{transform:rotateY(35deg) rotate(3deg) translateY(-7px)} 50%{transform:rotateY(-25deg) rotate(-3deg) translateY(2px)} 75%{transform:rotateY(20deg) rotate(2deg) translateY(-4px)} }
+  .card-mark { font-size:1rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }
+  .big-arrow { font-size:clamp(5rem,22vw,8rem); line-height:1.1; font-weight:900; }
+  .move { font-size:2rem; font-weight:950; margin-top:5px; }
+  .result-label { font-size:.8rem; text-transform:uppercase; letter-spacing:.15em; font-weight:900; margin-top:12px; }
+  .empty-symbol { font-size:5rem; line-height:1.1; }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  button { font:inherit; font-weight:850; border:0; border-radius:13px; padding:14px 20px; cursor:pointer; transition:transform .12s,filter .12s; }
+  button:active { transform:scale(.98); }
+  button:disabled { opacity:.55; cursor:wait; }
+  .primary { background:var(--gold); color:#1a251d; flex:1; min-width:170px; }
+  .secondary { background:#31473a; color:var(--cream); border:1px solid #587260; }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:22px 0 0; }
+  .stat { background:#101a14; border:1px solid #35483b; padding:12px 8px; border-radius:13px; text-align:center; }
+  .stat strong { display:block; font-size:1.45rem; color:var(--gold); }
+  .stat span { color:var(--muted); font-size:.78rem; }
+  .rules { margin-top:18px; padding:16px; border-radius:14px; background:#111b15; color:var(--muted); font-size:.92rem; line-height:1.5; }
+  .rules strong { color:var(--cream); }
+  .inventory { margin-top:18px; }
+  .inventory-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
+  h2 { font-size:1rem; margin:0; }
+  .remaining { font-size:.8rem; color:var(--muted); }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; }
+  .chip { border:1px solid #405847; background:#17231b; color:var(--muted); border-radius:9px; padding:7px 9px; font-size:.83rem; }
+  .chip.used { opacity:.35; text-decoration:line-through; }
+  .footer { color:#8fa196; font-size:.78rem; text-align:center; margin:18px 0 0; }
+  @media(max-width:420px) { body{padding:14px 10px} .stats{gap:6px}.stat span{font-size:.7rem}.controls button{padding:13px 12px} }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Board Game Racing</div>
+    <h1>DECK SPINNER</h1>
+    <p class="sub">Kocok kartu digital, buka hasilnya, lalu tentukan gerakan mobil.</p>
+  </header>
+  <section class="panel" aria-live="polite">
+    <div class="deck-area">
+      <div id="card" class="card back">
+        <div class="card-mark">Racing Deck</div>
+        <div class="big-arrow">✦</div>
+        <div class="result-label">Tekan Kocok & Buka</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="draw" class="primary">⟳ KOCOK & BUKA KARTU</button>
+      <button id="reset" class="secondary">Acak Ulang Deck</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><strong id="drawn">0</strong><span>Kartu dibuka</span></div>
+      <div class="stat"><strong id="left">20</strong><span>Kartu tersisa</span></div>
+      <div class="stat"><strong id="emptyCount">4</strong><span>Spin kosong tersisa</span></div>
+    </div>
+    <div class="rules">
+      <strong>Aturan hasil:</strong> Ada 20 kartu: 8 arah × +1, 8 arah × +2, dan 4 kartu kosong. Jika hasilnya <strong>SPIN KOSONG</strong>, mobil tidak mendapat tambahan gerak dari spinner. Setiap kartu yang dibuka tidak masuk kembali sampai deck diacak ulang.
+    </div>
+    <div class="inventory">
+      <div class="inventory-head"><h2>Kartu dalam deck</h2><span class="remaining" id="deckStatus">20 kartu tersedia</span></div>
+      <div id="chips" class="chips"></div>
+    </div>
+  </section>
+  <p class="footer">Prototipe lokal • Hasil acak • Bisa dicoba di HP atau komputer</p>
+</main>
+<script>
+(() => {
+  const directions = [
+    {symbol:"↑", name:"Utara"}, {symbol:"↗", name:"Timur Laut"},
+    {symbol:"→", name:"Timur"}, {symbol:"↘", name:"Tenggara"},
+    {symbol:"↓", name:"Selatan"}, {symbol:"↙", name:"Barat Daya"},
+    {symbol:"←", name:"Barat"}, {symbol:"↖", name:"Barat Laut"}
+  ];
+  const makeDeck = () => [
+    ...directions.map(d => ({...d, steps:1, key:d.symbol+" +1"})),
+    ...directions.map(d => ({...d, steps:2, key:d.symbol+" +2"})),
+    ...Array.from({length:4}, (_,i) => ({empty:true, name:"Spin Kosong", key:"KOSONG "+(i+1)}))
+  ];
+  let deck = [];
+  let drawn = 0;
+  let emptyCount = 4;
+  let busy = false;
+  const card = document.getElementById("card");
+  const drawBtn = document.getElementById("draw");
+  const resetBtn = document.getElementById("reset");
+  const chips = document.getElementById("chips");
+  const shuffle = arr => {
+    for (let i=arr.length-1; i>0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  };
+  function renderChips() {
+    chips.innerHTML = "";
+    const all = makeDeck();
+    const usedCounts = {};
+    // Track drawn card keys, including the four identical blank outcomes.
+    deck.forEach(c => { if(c.used) usedCounts[c.key]=(usedCounts[c.key]||0)+1; });
+    all.forEach(c => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      const used = (usedCounts[c.key]||0)>0;
+      if (used) { chip.classList.add("used"); usedCounts[c.key]--; }
+      chip.textContent = c.empty ? "— Kosong" : `${c.symbol} +${c.steps}`;
+      chips.appendChild(chip);
+    });
+    document.getElementById("drawn").textContent = drawn;
+    document.getElementById("left").textContent = deck.filter(c=>!c.used).length;
+    document.getElementById("emptyCount").textContent = deck.filter(c=>!c.used && c.empty).length;
+    document.getElementById("deckStatus").textContent = `${deck.filter(c=>!c.used).length} kartu tersedia`;
+    drawBtn.disabled = busy || deck.every(c=>c.used);
+    drawBtn.textContent = deck.every(c=>c.used) ? "DECK HABIS — ACAK ULANG" : "⟳ KOCOK & BUKA KARTU";
+  }
+  function reset() {
+    deck = shuffle(makeDeck());
+    drawn = 0;
+    emptyCount = 4;
+    card.className = "card back";
+    card.innerHTML = '<div class="card-mark">Racing Deck</div><div class="big-arrow">✦</div><div class="result-label">Tekan Kocok & Buka</div>';
+    renderChips();
+  }
+  function showResult(c) {
+    card.className = "card";
+    if (c.empty) {
+      card.style.borderColor = "#8b9b90";
+      card.innerHTML = '<div class="card-mark">Hasil Spinner</div><div class="empty-symbol">—</div><div class="result-label">SPIN KOSONG</div><div style="margin-top:14px;font-size:.95rem;font-weight:750">Tidak ada tambahan gerak</div>';
+    } else {
+      card.style.borderColor = c.steps===1 ? "#558d67" : "#d49b37";
+      card.innerHTML = `<div class="card-mark">Arah Gerak</div><div class="big-arrow">${c.symbol}</div><div class="move">+${c.steps}</div><div class="result-label">${c.name}</div>`;
+    }
+  }
+  drawBtn.addEventListener("click", () => {
+    if (busy) return;
+    if (deck.every(c=>c.used)) { reset(); return; }
+    busy = true; drawBtn.disabled = true; resetBtn.disabled = true;
+    card.className = "card back shuffling";
+    card.innerHTML = '<div class="card-mark">Racing Deck</div><div class="big-arrow">⟳</div><div class="result-label">Mengocok...</div>';
+    window.setTimeout(() => {
+      const available = deck.filter(c=>!c.used);
+      const picked = available[Math.floor(Math.random()*available.length)];
+      picked.used = true;
+      drawn++;
+      if (picked.empty) emptyCount--;
+      showResult(picked);
+      renderChips();
+      busy = false; resetBtn.disabled = false;
+      drawBtn.disabled = deck.every(c=>c.used);
+      if (deck.every(c=>c.used)) drawBtn.textContent = "DECK HABIS — ACAK ULANG";
+    }, 1100);
+  });
+  resetBtn.addEventListener("click", () => { if(!busy) reset(); });
+  reset();
+})();
+</script>
+</body>
+</html>
