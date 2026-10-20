@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#15251f">
+<title>CLIFF RUSH — Dual Spinner</title>
+<style>
+:root{color-scheme:dark;--bg:#101814;--cream:#f2e8ca;--gold:#dda12f;--ink:#20382d;--muted:#79836d}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#21352a,#0e1511 72%);color:var(--cream);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;padding:18px}
+main{width:min(820px,100%);text-align:center}
+.brand{color:#e5b54e;font-weight:900;letter-spacing:.2em;font-size:.75rem;margin-bottom:8px}
+h1{font-size:clamp(1.8rem,6vw,2.8rem);letter-spacing:.08em;margin:0 0 8px;color:#f4e8c8}
+.subtitle{color:#b9c7bd;margin:0 0 22px;font-size:.93rem}
+.spinners{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.panel{min-width:0}
+.panel-title{font-size:.9rem;letter-spacing:.12em;font-weight:900;margin:0 0 10px;color:#e5b54e}
+.card{position:relative;width:100%;aspect-ratio:5/7;border:4px solid var(--gold);border-radius:28px;background:linear-gradient(145deg,#f5edda 0%,#e6d9b6 100%);box-shadow:0 10px 0 #0004,0 18px 30px #0004;color:var(--ink);display:flex;flex-direction:column;align-items:center;overflow:hidden;padding:clamp(12px,3vw,24px)}
+.card:before{content:"";position:absolute;inset:10px;border:1px solid #9a8758;border-radius:18px;pointer-events:none}
+.card-title{position:relative;z-index:1;margin-top:clamp(18px,4vw,34px);font-size:clamp(.65rem,2.3vw,1rem);letter-spacing:.12em;font-weight:950}
+.result{position:relative;z-index:1;flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0}
+.arrow{font-size:clamp(4rem,14vw,7.2rem);line-height:1.03;font-weight:950}
+.value{font-size:clamp(2.2rem,8vw,3.7rem);line-height:1.05;font-weight:950;margin-top:14px}
+.direction{font-size:clamp(.8rem,2.8vw,1.2rem);font-weight:850;color:var(--muted);margin-top:15px}
+.number{font-size:clamp(5rem,17vw,8rem);line-height:1;font-weight:950}
+.small-label{font-size:clamp(.75rem,2.5vw,1rem);font-weight:900;letter-spacing:.12em;margin-top:15px}
+.result.rolling .arrow,.result.rolling .number{animation:roll .10s linear infinite alternate}
+.result.rolling .value,.result.rolling .direction,.result.rolling .small-label{animation:flicker .1s linear infinite alternate}
+@keyframes roll{from{transform:translateY(-2px);opacity:.65}to{transform:translateY(2px);opacity:1}}
+@keyframes flicker{from{opacity:.6}to{opacity:1}}
+button{font:inherit;font-weight:950;letter-spacing:.05em;border:0;border-radius:14px;padding:16px 26px;cursor:pointer;background:#e7b84f;color:#17251c;width:min(360px,100%);box-shadow:0 5px 0 #9e7124;margin-top:22px}
+button:active{transform:translateY(2px);box-shadow:0 3px 0 #9e7124}
+button:disabled{opacity:.72;cursor:wait}
+.hint{font-size:.88rem;line-height:1.5;color:#b9c7bd;margin:16px auto 0;max-width:620px}
+.legend{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.tag{border:1px solid #405847;border-radius:999px;padding:6px 10px;color:#b9c7bd;font-size:.78rem}
+@media(max-width:520px){body{padding:14px 10px}.spinners{gap:10px}.card{border-width:3px;border-radius:20px}.card:before{inset:7px;border-radius:13px}.card-title{margin-top:22px}.value{margin-top:9px}.direction{margin-top:9px}}
+@media(prefers-reduced-motion:reduce){.result.rolling *{animation:none!important}}
+</style>
+</head>
+<body><main>
+<div class="brand">BOARD GAME RACING</div>
+<h1>CLIFF RUSH</h1>
+<p class="subtitle">Spin arah gerak dan penempatan kartu bersamaan.</p>
+<div class="spinners">
+<section class="panel">
+<h2 class="panel-title">① ARAH MATA ANGIN</h2>
+<div class="card" aria-live="polite"><div class="card-title">ARAH GERAK</div>
+<div class="result" id="directionResult"><div class="arrow">↘</div><div class="value">+2</div><div class="direction">Tenggara</div></div>
+</div></section>
+<section class="panel">
+<h2 class="panel-title">② PENEMPATAN KARTU</h2>
+<div class="card" aria-live="polite"><div class="card-title">KARTU KE BERAPA?</div>
+<div class="result" id="positionResult"><div class="number">3</div><div class="small-label">KARTU KE-3 DARI 5</div></div>
+</div></section>
+</div>
+<button id="spin">⟳ SPIN BERSAMAAN</button>
+<div class="legend"><span class="tag">Arah: 8 arah × +1 / +2</span><span class="tag">Arah kosong: tidak bergerak</span><span class="tag">Posisi: 1–5</span></div>
+<p class="hint" id="hint">Jika hasil arah adalah “—” (spin kosong), tidak ada tambahan gerak dan penempatan kartu tidak berlaku. Jika arah valid, hasil penempatan menunjukkan kartu ke-1 sampai ke-5.</p>
+</main>
+<script>
+(()=>{
+ const dirs=[
+  {symbol:"↑",name:"Utara"},{symbol:"↗",name:"Timur Laut"},{symbol:"→",name:"Timur"},{symbol:"↘",name:"Tenggara"},
+  {symbol:"↓",name:"Selatan"},{symbol:"↙",name:"Barat Daya"},{symbol:"←",name:"Barat"},{symbol:"↖",name:"Barat Laut"}
+ ];
+ const directionOutcomes=[...dirs.map(d=>({...d,steps:1})),...dirs.map(d=>({...d,steps:2})),...Array.from({length:4},()=>({empty:true,name:"Spin Kosong"}))];
+ const positions=[1,2,3,4,5];
+ const dResult=document.getElementById("directionResult"),pResult=document.getElementById("positionResult");
+ const spin=document.getElementById("spin"),hint=document.getElementById("hint");
+ function randomIndex(max){const b=new Uint8Array(1);let n;do{crypto.getRandomValues(b);n=b[0]}while(n>=Math.floor(256/max)*max);return n%max}
+ function showDirection(o){
+  if(o.empty){dResult.innerHTML='<div class="arrow">—</div><div class="value" style="font-size:clamp(1.5rem,5vw,2.5rem)">SPIN KOSONG</div><div class="direction">Tidak ada tambahan gerak</div>'}
+  else{dResult.innerHTML=`<div class="arrow">${o.symbol}</div><div class="value">+${o.steps}</div><div class="direction">${o.name}</div>`}
+ }
+ function showPosition(n){
+  if(n===null){pResult.innerHTML='<div class="number">—</div><div class="small-label">TIDAK BERLAKU</div>'}
+  else{pResult.innerHTML=`<div class="number">${n}</div><div class="small-label">KARTU KE-${n} DARI 5</div>`}
+ }
+ spin.addEventListener("click",()=>{
+  if(spin.disabled)return;
+  spin.disabled=true;spin.textContent="MENGACAK BERSAMAAN...";
+  dResult.classList.add("rolling");pResult.classList.add("rolling");
+  let ticks=0;
+  const timer=setInterval(()=>{
+   const rollingDirection=directionOutcomes[randomIndex(directionOutcomes.length)];
+   showDirection(rollingDirection);
+   showPosition(positions[randomIndex(positions.length)]);
+   ticks++;
+   if(ticks>=18){
+    clearInterval(timer);
+    const finalDirection=directionOutcomes[randomIndex(directionOutcomes.length)];
+    const finalPosition=finalDirection.empty?null:positions[randomIndex(positions.length)];
+    showDirection(finalDirection);showPosition(finalPosition);
+    dResult.classList.remove("rolling");pResult.classList.remove("rolling");
+    spin.disabled=false;spin.textContent="⟳ SPIN LAGI";
+    hint.textContent=finalDirection.empty
+      ? "Hasil arah: SPIN KOSONG. Mobil tidak mendapat tambahan gerak, sehingga penempatan kartu tidak berlaku."
+      : `Hasil akhir: arah ${finalDirection.name} ${finalDirection.symbol} +${finalDirection.steps}. Penempatan: kartu ke-${finalPosition} dari 5.`;
+   }
+  },85);
+ });
+})();
+</script>
+</body></html>
